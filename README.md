@@ -1,11 +1,16 @@
-# 🚀 Sistema Web Full-Stack con Docker
+# Sistema Web Full-Stack con Docker
 
-## 📋 Componentes Principales
+Proyecto base para el trabajo final de Programacion 3. Es una aplicacion web completa con frontend, backend, base de datos y servicios auxiliares, todo orquestado con Docker Compose.
 
-### 🎯 Arquitectura General
+**Tu trabajo consiste en completar las partes marcadas con `// TODO` en el backend** (autenticacion JWT) y desarrollar las funcionalidades adicionales que se indiquen.
+
+---
+
+## Arquitectura General
+
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   Nginx     │    │   React     │    │   Express   │
+│   Caddy     │    │   React     │    │   Express   │
 │  (Proxy)    │◄──►│ (Frontend)  │◄──►│  (Backend)  │
 │   :80       │    │   :3000     │    │   :3001     │
 └─────────────┘    └─────────────┘    └─────────────┘
@@ -17,569 +22,820 @@
                    └─────────────┘    └─────────────┘
 ```
 
-### 🔧 Servicios del Sistema
+Todos los servicios corren dentro de contenedores Docker y se comunican a traves de una red interna (`app_network`). Caddy actua como reverse proxy: recibe todo el trafico en el puerto 80 y lo redirige al frontend o al backend segun la URL.
 
-| Servicio | Tecnología | Puerto | Función |
+| Servicio | Tecnologia | Puerto | Funcion |
 |----------|------------|--------|---------|
 | **Frontend** | React 18 | 3000 | Interfaz de usuario |
 | **Backend** | Express + Sequelize | 3001 | API REST |
-| **Database** | PostgreSQL 15 | 5432 | Base de datos principal |
+| **Database** | PostgreSQL 15 | 5432 | Base de datos relacional |
 | **Cache** | Redis 7 | 6379 | Cache y sesiones |
-| **Proxy** | Nginx | 80 | Reverse proxy |
-| **pgAdmin** | pgAdmin 4 | 5050 | Administración de BD |
+| **Proxy** | Caddy 2 | 80 | Reverse proxy |
+| **pgAdmin** | pgAdmin 4 | 5050 | Administracion visual de la BD |
 
 ---
 
-## 🏗️ Construcción Inicial
+## Inicio Rapido
 
-### 1️⃣ Preparación del Entorno
+### Requisitos previos
+
+- [Docker](https://docs.docker.com/get-docker/) y [Docker Compose](https://docs.docker.com/compose/install/) instalados.
+
+### Levantar el proyecto
+
 ```bash
-# Crear estructura de proyecto
-./setup-directories.sh mi-proyecto
-
-# Navegar al proyecto
-cd mi-proyecto
-
-# Crear archivos de configuración
-cp .env.example .env
-```
-
-### 2️⃣ Configuración de Variables
-```bash
-# Editar .env con tus valores
-nano .env
-```
-
-Contenido del archivo `.env` para desarrollo (opcional, por si surge algún problema):
-```env
-# ===========================================
-# BASE DE DATOS POSTGRESQL
-# ===========================================
-POSTGRES_DB=app_database
-POSTGRES_USER=app_user
-POSTGRES_PASSWORD=app_password
-
-# ===========================================
-# BACKEND (EXPRESS)
-# ===========================================
-NODE_ENV=development
-PORT=3001
-
-# Configuración de base de datos para Sequelize
-DB_HOST=database
-DB_PORT=5432
-DB_NAME=app_database
-DB_USER=app_user
-DB_PASSWORD=app_password
-
-# JWT para autenticación
-JWT_SECRET=mi_jwt_secret_super_seguro_para_desarrollo_2024
-
-# CORS - Permitir requests desde el frontend
-CORS_ORIGIN=http://localhost:3000
-
-# ===========================================
-# FRONTEND (REACT)
-# ===========================================
-REACT_APP_API_URL=http://localhost:3001/api
-REACT_APP_ENV=development
-
-# Hot reload optimizado para Docker
-CHOKIDAR_USEPOLLING=true
-WATCHPACK_POLLING=true
-FAST_REFRESH=true
-
-# WebSocket para hot reload
-WDS_SOCKET_HOST=localhost
-WDS_SOCKET_PORT=3000
-WDS_SOCKET_PATH=/ws
-
-# ESLint en desarrollo
-ESLINT_NO_DEV_ERRORS=true
-GENERATE_SOURCEMAP=true
-
-# ===========================================
-# REDIS
-# ===========================================
-REDIS_HOST=redis
-REDIS_PORT=6379
-REDIS_URL=redis://redis:6379
-
-# ===========================================
-# PGADMIN 4
-# ===========================================
-PGADMIN_DEFAULT_EMAIL=admin@example.com
-PGADMIN_DEFAULT_PASSWORD=admin123
-PGADMIN_CONFIG_SERVER_MODE=False
-PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
-
-# ===========================================
-# CONFIGURACIÓN DE DESARROLLO
-# ===========================================
-DEBUG=true
-LOG_LEVEL=debug
-UPLOAD_PATH=./uploads
-MAX_FILE_SIZE=10MB
-
-# Email para desarrollo (Mailtrap)
-EMAIL_HOST=smtp.mailtrap.io
-EMAIL_PORT=2525
-EMAIL_USER=tu_usuario_mailtrap
-EMAIL_PASS=tu_password_mailtrap
-EMAIL_FROM=noreply@tuapp.com
-
-# ===========================================
-# SEGURIDAD (DESARROLLO)
-# ===========================================
-RATE_LIMIT_REQUESTS=100
-RATE_LIMIT_WINDOW_MS=900000
-SESSION_SECRET=mi_session_secret_para_desarrollo
-COOKIE_SECURE=false
-COOKIE_HTTP_ONLY=true
-COOKIE_SAME_SITE=lax
-```
-
-### 3️⃣ Primera Construcción
-```bash
-# Construir todas las imágenes
+# Construir las imagenes (solo la primera vez o cuando cambien dependencias)
 docker-compose build
 
-# Inicializar base de datos y servicios
-docker-compose up -d
-```
-
----
-
-## 🚀 Ejecución del Sistema
-
-### Comandos Principales
-```bash
 # Iniciar todos los servicios
 docker-compose up
+```
 
-# Iniciar en background
-docker-compose up -d
+Una vez que todo este corriendo, podes acceder a:
 
-# Ver logs en tiempo real
-docker-compose logs -f
+| Recurso | URL |
+|---------|-----|
+| Frontend (React) | http://localhost:3000 |
+| Backend API | http://localhost:3001/api |
+| Health check | http://localhost:3001/health |
+| Proxy (Caddy) | http://localhost |
+| pgAdmin | http://localhost:5050 |
 
-# Ver logs de un servicio específico
-docker-compose logs -f backend
+> **Tip:** Si queres correrlo en segundo plano, usa `docker-compose up -d`. Para ver los logs: `docker-compose logs -f`.
 
-# Detener servicios
+### Detener el proyecto
+
+```bash
+# Detener los servicios (mantiene los datos)
 docker-compose down
 
-# Detener y limpiar volúmenes
+# Detener y borrar todos los datos (base de datos, cache, etc.)
 docker-compose down -v
 ```
 
-### URLs de Acceso
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:3001/api
-- **Health Check:** http://localhost:3001/health
-- **Nginx Proxy:** http://localhost
-- **pgAdmin 4:** http://localhost:5050
-- **Base de datos:** localhost:5432
-
 ---
 
-## 🔄 Desarrollo con Hot Reload
+## Estructura del Proyecto
 
-### Funcionamiento Automático
-- ✅ **React**: Cambios en `.js`, `.jsx`, `.css` → Recarga automática
-- ✅ **Express**: Cambios en `.js` → Reinicio con nodemon
-- ✅ **Base de datos**: Persistencia con volúmenes Docker
-
-### Workflow de Desarrollo
-1. Modifica archivos en `frontend/src/` o `backend/`
-2. Los cambios se detectan automáticamente
-3. El servicio correspondiente se actualiza
-4. Verifica cambios en el navegador
-
----
-
-## ⚠️ Problemas Comunes y Soluciones
-
-### 🔴 Error: "Cannot find module './models'"
-**Problema:** Faltan archivos básicos del backend
-```bash
-# Solución
-mkdir -p backend/models backend/routes
-# Crear archivos básicos con los scripts proporcionados
 ```
-
-### 🔴 Error: "Could not find index.html"
-**Problema:** React no encuentra archivos básicos
-```bash
-# Solución
-mkdir -p frontend/public frontend/src
-# Crear archivos básicos de React
-```
-
-### 🔴 Error: "psql: Is a directory"
-**Problema:** `init.sql` es carpeta en lugar de archivo
-```bash
-# Solución
-rm -rf database/init.sql
-touch database/init.sql
-# Agregar contenido SQL al archivo
-```
-
-### 🔴 Error de credenciales Docker Desktop
-**Problema:** `error getting credentials - err: exec: "docker-credential-desktop.exe": executable file not found`
-```bash
-# Solución: Reset de configuración Docker
-# Hacer backup de la configuración actual
-cp ~/.docker/config.json ~/.docker/config.json.backup
-
-# Crear configuración limpia
-echo '{}' > ~/.docker/config.json
-
-# Intentar build nuevamente
-docker compose build
-```
-
-### 🔴 Puerto ya en uso
-**Problema:** Servicios corriendo en puertos ocupados
-```bash
-# Verificar puertos ocupados
-netstat -4 -tln | grep :3000
-
-# Solución: Cambiar puertos en docker-compose.yml
-ports:
-  - "3002:3000"  # Cambia puerto externo
-```
-
-### 🔴 Error de permisos en Docker
-**Problema:** Permisos de archivos en contenedores
-```bash
-# Solución
-sudo chown -R $USER:$USER .
-chmod -R 755 .
-```
-
-### 🔴 Hot reload no funciona
-**Problema:** Cambios no se detectan automáticamente
-```bash
-# Verificar variables de entorno
-CHOKIDAR_USEPOLLING=true
-WATCHPACK_POLLING=true
-
-# Reiniciar servicio específico
-docker-compose restart frontend
-```
-
-### 🔴 Base de datos no conecta
-**Problema:** Backend no puede conectar a PostgreSQL
-```bash
-# Verificar salud de la base de datos
-docker-compose ps database
-
-# Ver logs de PostgreSQL
-docker-compose logs database
-
-# Reiniciar con volúmenes limpios
-docker-compose down -v
-docker-compose up --build
+proyecto/
+├── docker-compose.yml              # Orquestacion de todos los servicios
+├── .gitignore
+├── README.md
+│
+├── backend/
+│   ├── Dockerfile.dev               # Imagen Docker para desarrollo
+│   ├── package.json
+│   ├── server.js                    # Punto de entrada del servidor Express
+│   ├── config/
+│   │   ├── config.js                # Config de Sequelize CLI (migraciones)
+│   │   └── database.js              # Config de conexion a PostgreSQL
+│   ├── models/
+│   │   ├── index.js                 # Inicializa Sequelize y registra modelos
+│   │   └── User.js                  # Modelo de usuario (tiene TODOs)
+│   ├── controllers/
+│   │   └── authController.js        # Logica de registro, login y perfil (tiene TODOs)
+│   ├── middleware/
+│   │   └── auth.js                  # Generacion y verificacion de JWT (tiene TODOs)
+│   ├── routes/
+│   │   ├── index.js                 # Router principal, monta /api/auth
+│   │   └── auth.js                  # Rutas de autenticacion
+│   ├── migrations/                  # Migraciones de base de datos
+│   ├── seeders/                     # Datos de prueba
+│   ├── tests/                       # Tests
+│   └── utils/                       # Funciones auxiliares
+│
+├── frontend/
+│   ├── Dockerfile.dev
+│   ├── package.json
+│   ├── public/
+│   │   └── index.html
+│   └── src/
+│       ├── index.js                 # Punto de entrada de React
+│       ├── App.js                   # Componente principal
+│       ├── components/              # Componentes reutilizables
+│       │   ├── common/
+│       │   ├── layout/
+│       │   └── ui/
+│       ├── pages/                   # Paginas de la aplicacion
+│       ├── services/                # Llamadas a la API (axios)
+│       ├── hooks/                   # Custom hooks de React
+│       ├── utils/                   # Funciones auxiliares
+│       ├── styles/                  # Estilos globales
+│       └── assets/                  # Imagenes, iconos, etc.
+│
+├── database/
+│   └── init.sql                     # Script que se ejecuta al crear la BD
+│
+├── caddy/
+│   └── Caddyfile                    # Configuracion del reverse proxy
+│
+└── pgadmin/
+    ├── Dockerfile
+    ├── servers.json                 # Conexion preconfigurada al PostgreSQL
+    └── pgpass                       # Credenciales de la BD
 ```
 
 ---
 
-## 🛠️ Comandos de Mantenimiento
+## Que Hay Que Completar: Autenticacion JWT
 
-### Limpieza del Sistema
+El sistema de autenticacion esta parcialmente implementado. Hay **8 TODOs** distribuidos en 3 archivos que deben ser completados para que funcione.
+
+### Como funciona JWT (teoria)
+
+1. El usuario se **registra** enviando nombre, email y password.
+2. El servidor **hashea** la password (nunca se guarda en texto plano) y crea el usuario en la BD.
+3. El servidor genera un **token JWT** (un string firmado que contiene el id y email del usuario) y se lo devuelve.
+4. Para las siguientes peticiones, el cliente envia el token en el header `Authorization: Bearer <token>`.
+5. El servidor **verifica** que el token sea valido y no haya expirado antes de dar acceso.
+
+### Endpoints de la API
+
+| Metodo | Ruta | Protegida | Descripcion |
+|--------|------|-----------|-------------|
+| `POST` | `/api/auth/register` | No | Registrar un nuevo usuario |
+| `POST` | `/api/auth/login` | No | Iniciar sesion |
+| `GET` | `/api/auth/perfil` | Si | Obtener datos del usuario logueado |
+
+#### Ejemplo: Registro
+
 ```bash
-# Limpiar contenedores parados
-docker container prune
+curl -X POST http://localhost:3001/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"nombre": "Juan", "email": "juan@test.com", "password": "123456"}'
+```
 
-# Limpiar imágenes sin uso
-docker image prune
+Respuesta esperada (una vez completados los TODOs):
+```json
+{
+  "message": "Usuario registrado exitosamente",
+  "user": { "id": 1, "nombre": "Juan", "email": "juan@test.com" },
+  "token": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
 
-# Limpiar todo el sistema Docker
-docker system prune -a
+#### Ejemplo: Login
 
-# Reconstruir desde cero
-docker-compose down -v --rmi all
-docker-compose build --no-cache
+```bash
+curl -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "juan@test.com", "password": "123456"}'
+```
+
+#### Ejemplo: Acceder al perfil (ruta protegida)
+
+```bash
+curl http://localhost:3001/api/auth/perfil \
+  -H "Authorization: Bearer <token_obtenido_en_login>"
+```
+
+### Archivos con TODOs
+
+A continuacion se detalla cada TODO. **No cambies la estructura de los archivos**, solo completa las partes indicadas.
+
+---
+
+### 1. `backend/models/User.js` — Modelo de usuario
+
+Este archivo define la tabla `users` en la base de datos usando Sequelize.
+
+**TODO 1 — Hook `beforeCreate`:** Antes de guardar un usuario nuevo, hay que hashear la password para no almacenarla en texto plano.
+
+```javascript
+// Pista: bcrypt.hash(user.password, 10) devuelve una promesa con el hash.
+// Hay que asignar el resultado a user.password.
+```
+
+**TODO 2 — Metodo `validarPassword`:** Este metodo compara una password en texto plano con el hash almacenado. Se usa en el login.
+
+```javascript
+// Pista: bcrypt.compare(password, this.password) devuelve true o false.
+```
+
+---
+
+### 2. `backend/middleware/auth.js` — Generacion y verificacion de tokens
+
+Este archivo exporta dos funciones: una para crear tokens y otra para verificar que un request tenga un token valido.
+
+**TODO 3 — `generarToken`:** Crear un JWT firmado con los datos del usuario.
+
+```javascript
+// Pista: jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' })
+```
+
+**TODO 4 — Extraer el token del header:** El header `Authorization` tiene el formato `"Bearer eyJhbG..."`. Hay que extraer solo la parte del token.
+
+```javascript
+// Pista: authHeader.split(' ') devuelve un array ["Bearer", "eyJhbG..."].
+// El token esta en la posicion [1].
+```
+
+**TODO 5 — `verificarToken`:** Decodificar el token y, si es valido, guardar los datos del usuario en `req.user` para que los controladores puedan usarlos.
+
+```javascript
+// Pista: jwt.verify(token, JWT_SECRET) devuelve el payload decodificado.
+// Guardar el resultado en req.user y llamar a next().
+```
+
+---
+
+### 3. `backend/controllers/authController.js` — Logica de registro, login y perfil
+
+Este archivo tiene la logica de negocio de cada endpoint.
+
+**TODO 6 — `register`:** Crear el usuario en la base de datos.
+
+```javascript
+// Pista: await User.create({ nombre, email, password })
+// El hook beforeCreate se encarga de hashear la password automaticamente.
+```
+
+**TODO 7 — `login`:** Buscar al usuario por email y validar su password.
+
+```javascript
+// Pista para buscar: await User.findOne({ where: { email } })
+// Pista para validar: await user.validarPassword(password)
+```
+
+**TODO 8 — `perfil`:** Obtener el usuario desde la BD usando el id que el middleware puso en `req.user`.
+
+```javascript
+// Pista: await User.findByPk(req.user.id)
+```
+
+---
+
+### Como verificar que funciona
+
+Una vez completados los 8 TODOs:
+
+```bash
+# 1. Levantar los servicios
 docker-compose up
+
+# 2. Registrar un usuario
+curl -X POST http://localhost:3001/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"nombre": "Test", "email": "test@test.com", "password": "123456"}'
+
+# 3. Hacer login (copiar el token de la respuesta)
+curl -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@test.com", "password": "123456"}'
+
+# 4. Acceder al perfil con el token
+curl http://localhost:3001/api/auth/perfil \
+  -H "Authorization: Bearer PEGAR_TOKEN_AQUI"
 ```
 
-### Base de Datos y Administración
+Si el paso 4 devuelve los datos del usuario, la autenticacion esta funcionando correctamente.
+
+---
+
+## Desarrollo con Hot Reload
+
+Cuando los servicios estan corriendo, los cambios en el codigo se aplican automaticamente:
+
+- **Frontend (React):** Cualquier cambio en `frontend/src/` se refleja al instante en el navegador gracias a Fast Refresh.
+- **Backend (Express):** Cualquier cambio en `backend/` reinicia automaticamente el servidor gracias a nodemon.
+- **Base de datos:** Los datos persisten entre reinicios gracias a los volumenes de Docker. Solo se pierden si ejecutas `docker-compose down -v`.
+
+### Flujo de trabajo
+
+1. Edita los archivos en tu editor (VS Code, etc.)
+2. Los cambios se detectan automaticamente dentro del contenedor
+3. El servicio correspondiente se recarga
+4. Verifica en el navegador o con `curl`
+
+---
+
+## Base de Datos
+
+### Acceso con pgAdmin (interfaz web)
+
+pgAdmin ya viene preconfigurado para conectarse a la base de datos. Solo hay que entrar a:
+
+- **URL:** http://localhost:5050
+- **Email:** `admin@example.com`
+- **Password:** `admin123`
+
+La conexion al servidor PostgreSQL ya esta configurada automaticamente.
+
+### Acceso por terminal
+
 ```bash
-# Ejecutar migraciones
-docker-compose exec backend npm run migrate
-
-# Ejecutar seeders
-docker-compose exec backend npm run seed
-
-# Acceder a PostgreSQL via CLI
+# Abrir una consola SQL directa
 docker-compose exec database psql -U app_user -d app_database
-
-# Acceder a pgAdmin 4 (Interfaz Web)
-# URL: http://localhost:5050
-# Email: admin@example.com
-# Password: admin123
-
-# Backup de base de datos
-docker-compose exec database pg_dump -U app_user app_database > backup.sql
-
-# Restaurar backup
-docker-compose exec -T database psql -U app_user -d app_database < backup.sql
 ```
 
-### Backend - Migraciones y Sequelize
+### Credenciales de la BD
+
+| Campo | Valor |
+|-------|-------|
+| Host (desde otro contenedor) | `database` |
+| Host (desde tu maquina) | `localhost` |
+| Puerto | `5432` |
+| Base de datos | `app_database` |
+| Usuario | `app_user` |
+| Password | `app_password` |
+
+### Migraciones y Seeders con Sequelize
+
+Las migraciones permiten versionar cambios en la estructura de la BD. Los seeders insertan datos de prueba.
+
 ```bash
-# Acceder al shell del contenedor backend
+# Entrar al contenedor del backend
 docker-compose exec backend sh
 
-# Una vez dentro del contenedor backend:
+# Crear una nueva migracion
 npx sequelize-cli migration:generate --name create-users
-npx sequelize-cli migration:generate --name add-email-to-users
+
+# Ejecutar migraciones pendientes
 npx sequelize-cli db:migrate
+
+# Deshacer la ultima migracion
 npx sequelize-cli db:migrate:undo
-npx sequelize-cli seed:generate --name demo-users
-npx sequelize-cli db:seed:all
 
 # Ver estado de migraciones
 npx sequelize-cli db:migrate:status
 
-# Salir del contenedor
-exit
-```
+# Crear un seeder
+npx sequelize-cli seed:generate --name demo-users
 
-### Frontend - Comandos de Desarrollo
-```bash
-# Acceder al shell del contenedor frontend
-docker-compose exec frontend sh
-
-# Una vez dentro del contenedor:
-npm install axios react-router-dom
-npm run build
-npm run test
-npm run eject
-
-# Linting y formateo
-npm run lint (si está configurado)
+# Ejecutar todos los seeders
+npx sequelize-cli db:seed:all
 
 # Salir del contenedor
 exit
 ```
 
-### Debugging
+### Backup y restauracion
+
 ```bash
-# Acceder al contenedor del backend
-docker-compose exec backend sh
+# Exportar la base de datos
+docker-compose exec database pg_dump -U app_user app_database > backup.sql
 
-# Acceder al contenedor del frontend
-docker-compose exec frontend sh
-
-# Ver variables de entorno
-docker-compose exec backend env
-
-# Monitorear recursos
-docker stats
+# Importar un backup
+docker-compose exec -T database psql -U app_user -d app_database < backup.sql
 ```
 
 ---
 
-## 📈 Escalabilidad y Producción
+## Variables de Entorno
 
-### Optimizaciones Recomendadas
-- **Multi-stage builds** para imágenes más pequeñas
-- **Health checks** más robustos
-- **Límites de recursos** en contenedores
-- **SSL/TLS** con Let's Encrypt
-- **Load balancing** con múltiples instancias
+Las variables de entorno del backend estan definidas directamente en `docker-compose.yml`, dentro del servicio `backend`. Las mas importantes son:
 
-### Variables de Entorno de Producción
-```env
-NODE_ENV=production
-POSTGRES_PASSWORD=contraseña_super_segura
-JWT_SECRET=jwt_secret_muy_complejo
-```
+| Variable | Valor | Descripcion |
+|----------|-------|-------------|
+| `NODE_ENV` | `development` | Entorno de ejecucion |
+| `PORT` | `3001` | Puerto del servidor Express |
+| `DB_HOST` | `database` | Nombre del servicio de PostgreSQL en Docker |
+| `DB_PORT` | `5432` | Puerto de PostgreSQL |
+| `DB_NAME` | `app_database` | Nombre de la base de datos |
+| `DB_USER` | `app_user` | Usuario de la BD |
+| `DB_PASSWORD` | `app_password` | Password de la BD |
+| `JWT_SECRET` | `your_jwt_secret_here` | Clave secreta para firmar los tokens JWT |
+| `CORS_ORIGIN` | `http://localhost:3000` | Origen permitido para peticiones del frontend |
+
+> **Nota:** En un entorno de produccion, estas variables **nunca** deben estar en el codigo ni en el repositorio. Se usan archivos `.env` o secrets de Docker.
 
 ---
 
-## 📚 Estructura de Archivos Importantes
+## Comandos Utiles
 
-```
-proyecto/
-├── docker-compose.yml          # Orquestación de servicios
-├── .env                        # Variables de entorno
-├── .gitignore                  # Archivos a ignorar en Git
-│
-├── frontend/
-│   ├── Dockerfile.dev          # Imagen Docker para desarrollo
-│   ├── package.json            # Dependencies de React
-│   └── src/                    # Código fuente React
-│
-├── backend/
-│   ├── Dockerfile.dev          # Imagen Docker para desarrollo
-│   ├── package.json            # Dependencies de Express
-│   ├── server.js               # Servidor principal
-│   ├── models/                 # Modelos de Sequelize
-│   └── routes/                 # Rutas del API
-│
-├── database/
-│   └── init.sql                # Script de inicialización
-│
-└── nginx/
-    └── nginx.conf              # Configuración del proxy
-```
+### Docker Compose
 
-### Debugging
 ```bash
-# Acceder al contenedor del backend
-docker-compose exec backend sh
+# Ver el estado de los contenedores
+docker-compose ps
 
-# Acceder al contenedor del frontend
-docker-compose exec frontend sh
-
-# Ver variables de entorno
-docker-compose exec backend env
-docker-compose exec frontend env
-
-# Monitorear recursos
-docker stats
-
-# Ver logs en tiempo real de todos los servicios
-docker-compose logs -f
-
-# Ver logs de un servicio específico
+# Ver logs de un servicio en particular
 docker-compose logs -f backend
 docker-compose logs -f frontend
 docker-compose logs -f database
-docker-compose logs -f pgadmin
+
+# Reiniciar un servicio sin detener los demas
+docker-compose restart backend
+
+# Reconstruir un servicio (cuando cambias package.json o el Dockerfile)
+docker-compose up --build backend
+
+# Entrar al shell de un contenedor
+docker-compose exec backend sh
+docker-compose exec frontend sh
+
+# Ver las variables de entorno dentro de un contenedor
+docker-compose exec backend env
 ```
 
----
+### Limpieza
 
-## 📈 Escalabilidad y Producción
-
-### Optimizaciones Recomendadas
-- **Multi-stage builds** para imágenes más pequeñas
-- **Health checks** más robustos para todos los servicios
-- **Límites de recursos** en contenedores (CPU, memoria)
-- **SSL/TLS** con certificados Let's Encrypt
-- **Load balancing** con múltiples instancias del backend
-- **Separación de entornos** (desarrollo, staging, producción)
-
-### Consideraciones de Seguridad
-- **Cambiar contraseñas por defecto** antes de producción
-- **Usar HTTPS** para todas las comunicaciones
-- **Configurar firewall** para limitar acceso a puertos
-- **Actualizar imágenes** regularmente por seguridad
-- **Usar secrets de Docker** para datos sensibles
-
----
-
-## 📚 Estructura de Archivos Importantes
-
-```
-proyecto/
-├── docker-compose.yml          # Orquestación de servicios
-├── .env                        # Variables de entorno
-├── .env.example               # Plantilla de variables
-├── .gitignore                 # Archivos a ignorar en Git
-├── README.md                  # Documentación del proyecto
-│
-├── frontend/
-│   ├── Dockerfile.dev         # Imagen Docker para desarrollo
-│   ├── package.json           # Dependencies de React
-│   ├── public/
-│   │   ├── index.html         # Página HTML principal
-│   │   └── manifest.json      # Configuración PWA
-│   └── src/
-│       ├── App.js             # Componente principal
-│       ├── index.js           # Punto de entrada
-│       ├── components/        # Componentes reutilizables
-│       ├── pages/             # Páginas de la aplicación
-│       ├── services/          # Servicios API
-│       └── utils/             # Utilidades
-│
-├── backend/
-│   ├── Dockerfile.dev         # Imagen Docker para desarrollo
-│   ├── package.json           # Dependencies de Express
-│   ├── server.js              # Servidor principal
-│   ├── config/
-│   │   └── database.js        # Configuración de Sequelize
-│   ├── models/
-│   │   └── index.js           # Modelos de Sequelize
-│   ├── controllers/           # Lógica de negocio
-│   ├── routes/                # Rutas del API
-│   │   └── index.js           # Rutas principales
-│   ├── middleware/            # Middlewares personalizados
-│   ├── migrations/            # Migraciones de BD
-│   └── seeders/               # Datos de prueba
-│
-├── database/
-│   └── init.sql               # Script de inicialización
-│
-├── nginx/
-│   └── nginx.conf             # Configuración del proxy
-│
-├── pgadmin/
-│   ├── servers.json           # Configuración de servidores
-│   └── pgpass                 # Credenciales de BD
-│
-└── scripts/
-    └── setup-directories.sh   # Script de inicialización
-```
-
----
-
-## 🎯 Tips y Mejores Prácticas
-
-### Desarrollo Eficiente
-- **Usa hot reload** para ver cambios instantáneamente
-- **Consulta logs** regularmente para detectar errores temprano
-- **Usa pgAdmin** para explorar y modificar datos visualmente
-- **Ejecuta migraciones** cada vez que cambies modelos
-- **Haz backups** antes de cambios importantes en BD
-
-### Gestión de Dependencias
-- **Actualiza package.json** cuando agregues nuevas dependencias
-- **Reconstruye imágenes** después de cambios en dependencies
-- **Usa volúmenes** para node_modules para mejorar rendimiento
-- **Sincroniza versiones** entre desarrollo y producción
-
-### Resolución de Problemas
-1. **Verifica logs** primero: `docker-compose logs -f`
-2. **Comprueba estado** de contenedores: `docker-compose ps`
-3. **Reinicia servicios** específicos si es necesario
-4. **Limpia volúmenes** si hay problemas de datos
-5. **Reconstruye imágenes** como último recurso
-
-### Comandos de Emergencia
 ```bash
-# Reiniciar todo el sistema
-docker-compose restart
+# Detener servicios y borrar datos
+docker-compose down -v
 
-# Limpiar y empezar desde cero
+# Reconstruir todo desde cero (cuando nada funciona)
 docker-compose down -v --rmi all
 docker-compose build --no-cache
 docker-compose up
 
-# Liberar espacio en Docker
-docker system prune -a --volumes
+# Liberar espacio de Docker en el sistema
+docker system prune -a
 ```
 
 ---
 
-## 🆘 Soporte y Recursos
+## Problemas Comunes
 
-### Documentación Oficial
-- **Docker Compose**: https://docs.docker.com/compose/
-- **React**: https://react.dev/
-- **Express**: https://expressjs.com/
-- **Sequelize**: https://sequelize.org/
-- **PostgreSQL**: https://www.postgresql.org/docs/
-- **pgAdmin**: https://www.pgadmin.org/docs/
+### El backend no conecta a la base de datos
 
-### Comunidades y Ayuda
-- **Stack Overflow** para problemas específicos
-- **GitHub Issues** de cada proyecto
-- **Discord/Slack** de las comunidades
-- **Reddit** r/docker, r/reactjs, r/node
+La base de datos tarda unos segundos en iniciar. El `docker-compose.yml` tiene un `healthcheck` para que el backend espere, pero a veces no alcanza.
 
-¡Sistema completo y listo para desarrollo! 🚀
+```bash
+# Verificar que la BD este corriendo
+docker-compose ps database
+
+# Ver los logs de PostgreSQL
+docker-compose logs database
+
+# Solucion nuclear: reiniciar con volumenes limpios
+docker-compose down -v
+docker-compose up --build
+```
+
+### Un puerto ya esta en uso
+
+Si otro programa ya esta usando el puerto 3000, 3001 u 80:
+
+```bash
+# Ver que proceso usa el puerto
+lsof -i :3000
+# o en Linux
+netstat -tlnp | grep :3000
+```
+
+Podes cambiar el puerto externo en `docker-compose.yml`. Por ejemplo, para mover el frontend al puerto 3002:
+
+```yaml
+ports:
+  - "3002:3000"  # externo:interno
+```
+
+### Hot reload no funciona
+
+Verificar que estas variables esten en `docker-compose.yml` dentro del servicio `frontend`:
+
+```yaml
+environment:
+  - CHOKIDAR_USEPOLLING=true
+  - WATCHPACK_POLLING=true
+```
+
+Si sigue sin funcionar, reiniciar el servicio: `docker-compose restart frontend`.
+
+### Error de permisos en Docker
+
+```bash
+sudo chown -R $USER:$USER .
+chmod -R 755 .
+```
+
+### Error de credenciales de Docker Desktop (Windows/WSL)
+
+```
+error getting credentials - err: exec: "docker-credential-desktop.exe"
+```
+
+```bash
+# Hacer backup de la config de Docker
+cp ~/.docker/config.json ~/.docker/config.json.backup
+
+# Resetear la config
+echo '{}' > ~/.docker/config.json
+
+# Intentar de nuevo
+docker-compose build
+```
+
+---
+
+## Tecnologias Utilizadas
+
+### Backend
+- **[Express](https://expressjs.com/)** — Framework web para Node.js
+- **[Sequelize](https://sequelize.org/)** — ORM para bases de datos SQL
+- **[jsonwebtoken](https://github.com/auth0/node-jsonwebtoken)** — Generacion y verificacion de JWT
+- **[bcryptjs](https://github.com/dcodeIO/bcrypt.js)** — Hashing de passwords
+- **[helmet](https://helmetjs.github.io/)** — Headers de seguridad HTTP
+- **[cors](https://github.com/expressjs/cors)** — Configuracion de Cross-Origin Resource Sharing
+- **[morgan](https://github.com/expressjs/morgan)** — Logging de peticiones HTTP
+
+### Frontend
+- **[React 18](https://react.dev/)** — Biblioteca para interfaces de usuario
+- **[React Router](https://reactrouter.com/)** — Navegacion SPA
+- **[Axios](https://axios-http.com/)** — Cliente HTTP
+- **[React Query](https://tanstack.com/query)** — Manejo de estado del servidor
+- **[React Hook Form](https://react-hook-form.com/)** — Manejo de formularios
+- **[Tailwind CSS](https://tailwindcss.com/)** — Framework de estilos utilitario
+
+### Infraestructura
+- **[Docker](https://docs.docker.com/)** — Contenedores
+- **[Docker Compose](https://docs.docker.com/compose/)** — Orquestacion multi-contenedor
+- **[PostgreSQL 15](https://www.postgresql.org/docs/15/)** — Base de datos relacional
+- **[Redis 7](https://redis.io/docs/)** — Cache en memoria
+- **[Caddy 2](https://caddyserver.com/docs/)** — Reverse proxy
+- **[pgAdmin 4](https://www.pgadmin.org/docs/)** — Administracion visual de PostgreSQL
+
+---
+---
+
+# Secciones Opcionales / Avanzadas
+
+Las siguientes secciones cubren temas que van mas alla del desarrollo local. No son necesarias para completar el trabajo, pero son utiles si queres exponer tu proyecto a internet o desplegarlo en un servidor real.
+
+---
+
+## Opcional: Configurar Caddy para Produccion con HTTPS
+
+### Que es Caddy y por que lo usamos
+
+Caddy es un servidor web moderno que funciona como **reverse proxy** (intermediario entre el usuario y tus servicios). En este proyecto, Caddy recibe todas las peticiones en el puerto 80 y decide a donde mandarlas:
+
+- Si la URL empieza con `/api` o `/health` → la envia al **backend** (Express, puerto 3001)
+- Cualquier otra URL → la envia al **frontend** (React, puerto 3000)
+
+```
+Usuario → Caddy (:80) → /api/*    → Backend (:3001)
+                       → /*        → Frontend (:3000)
+```
+
+La ventaja principal de Caddy sobre otros servidores como Nginx o Apache es que **configura HTTPS automaticamente**. Cuando le das un nombre de dominio, Caddy se encarga solo de:
+
+1. Pedir un certificado SSL gratuito a Let's Encrypt
+2. Instalarlo
+3. Renovarlo automaticamente cada ~60 dias
+4. Redirigir HTTP → HTTPS
+
+Con Nginx, todo eso hay que configurarlo manualmente.
+
+### Que se necesita para HTTPS
+
+Para que Caddy active HTTPS automatico necesitas **dos cosas**:
+
+1. **Un nombre de dominio** que apunte a la IP de tu servidor (por ejemplo `miproyecto.com` o `miproyecto.duckdns.org`)
+2. **Que los puertos 80 y 443 esten abiertos** y accesibles desde internet
+
+> **Nota:** HTTPS no funciona con `localhost` ni con direcciones IP directas. Se necesita un dominio.
+
+### Configurar Caddy con un dominio
+
+Si tenes un dominio apuntando a tu servidor, la configuracion es asi de simple. Editar `caddy/Caddyfile`:
+
+```
+miproyecto.com {
+    handle /api/* {
+        reverse_proxy backend:3001
+    }
+
+    handle /health {
+        reverse_proxy backend:3001
+    }
+
+    handle {
+        reverse_proxy frontend:3000
+    }
+}
+```
+
+El unico cambio respecto a la configuracion de desarrollo es reemplazar `:80` por el nombre de dominio. Caddy hace todo lo demas automaticamente.
+
+Tambien hay que actualizar el servicio en `docker-compose.yml` para exponer el puerto 443 (HTTPS) y darle un volumen para guardar los certificados:
+
+```yaml
+caddy:
+  image: caddy:2-alpine
+  container_name: app_caddy
+  restart: unless-stopped
+  ports:
+    - "80:80"
+    - "443:443"
+  volumes:
+    - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+    - caddy_data:/data
+    - caddy_config:/config
+```
+
+Y agregar `caddy_config` a la seccion `volumes` del final del archivo:
+
+```yaml
+volumes:
+  # ...los que ya estan...
+  caddy_config:
+```
+
+### Que es DDNS (DNS Dinamico)
+
+Para entender DDNS, primero hay que entender el problema que resuelve.
+
+**El problema:** cuando contras un dominio (por ejemplo en Namecheap o Google Domains), tenes que decirle a que direccion IP apunta. Pero la mayoria de las conexiones hogareñas tienen **IP dinamica**: tu proveedor de internet te cambia la IP periodicamente (cada horas o dias). Si tu IP cambia, el dominio deja de apuntar al lugar correcto y tu sitio queda inaccesible.
+
+**La solucion: DNS Dinamico (DDNS).** Es un servicio que actualiza automaticamente la relacion dominio → IP. Funciona asi:
+
+1. Te registras en un servicio DDNS y te dan un subdominio (ejemplo: `miproyecto.duckdns.org`)
+2. Instalas un cliente en tu computadora/servidor que cada pocos minutos le avisa al servicio de DDNS cual es tu IP actual
+3. Si tu IP cambia, el servicio actualiza el registro DNS automaticamente
+
+```
+Tu PC (IP cambia) → Cliente DDNS avisa → Servicio DDNS actualiza → Dominio siempre apunta a tu IP
+```
+
+### Servicios DDNS gratuitos
+
+| Servicio | Subdominio que te dan | Notas |
+|----------|----------------------|-------|
+| [Duck DNS](https://www.duckdns.org/) | `tunombre.duckdns.org` | Gratuito, simple, popular |
+| [No-IP](https://www.noip.com/) | `tunombre.ddns.net` | Gratuito con renovacion mensual |
+| [Dynu](https://www.dynu.com/) | `tunombre.dynu.net` | Gratuito, soporta dominios propios |
+| [Afraid.org](https://freedns.afraid.org/) | Varios disponibles | Gratuito, muchas opciones de subdominio |
+
+### Ejemplo completo con Duck DNS
+
+**Paso 1:** Crear una cuenta en [duckdns.org](https://www.duckdns.org/) (se puede entrar con Google/GitHub).
+
+**Paso 2:** Crear un subdominio, por ejemplo `miprog3`. Esto te da `miprog3.duckdns.org`.
+
+**Paso 3:** Agregar un servicio DDNS al `docker-compose.yml` para que actualice tu IP automaticamente:
+
+```yaml
+duckdns:
+  image: lscr.io/linuxserver/duckdns:latest
+  container_name: app_duckdns
+  restart: unless-stopped
+  environment:
+    - SUBDOMAINS=miprog3
+    - TOKEN=tu-token-de-duckdns
+    - UPDATE_IP=ipv4
+    - TZ=America/Argentina/Buenos_Aires
+```
+
+> El token lo encontras en tu panel de Duck DNS despues de loguearte.
+
+**Paso 4:** Actualizar el `Caddyfile` para usar tu subdominio:
+
+```
+miprog3.duckdns.org {
+    handle /api/* {
+        reverse_proxy backend:3001
+    }
+
+    handle /health {
+        reverse_proxy backend:3001
+    }
+
+    handle {
+        reverse_proxy frontend:3000
+    }
+}
+```
+
+**Paso 5:** Abrir los puertos 80 y 443 en tu router (port forwarding) hacia la IP local de tu computadora.
+
+Con esto, cualquier persona puede entrar a `https://miprog3.duckdns.org` desde cualquier lugar y ver tu proyecto corriendo con HTTPS.
+
+### Consideraciones importantes
+
+- **Port forwarding:** Tu router por defecto bloquea conexiones entrantes. Tenes que entrar a la configuracion del router (generalmente `192.168.1.1`) y redirigir los puertos 80 y 443 hacia la IP local de tu maquina.
+- **Firewall:** Si usas Linux, asegurate de que `ufw` u otro firewall permita los puertos 80 y 443.
+- **Seguridad:** Exponer tu computadora a internet tiene riesgos. Asegurate de cambiar todas las contraseñas por defecto antes de hacerlo (base de datos, pgAdmin, JWT secret).
+
+---
+
+## Opcional: Despliegue en AWS con EC2
+
+### Que es AWS
+
+Amazon Web Services (AWS) es la plataforma de servicios en la nube mas grande del mundo. Ofrece servidores, bases de datos, almacenamiento, redes y cientos de servicios mas que se pagan por uso. En vez de comprar un servidor fisico, alquilas uno virtual que podes crear, configurar y destruir en minutos.
+
+### Que es el Free Tier
+
+AWS tiene un programa llamado **Free Tier** (nivel gratuito) que permite usar varios servicios **sin costo** durante los primeros 12 meses despues de crear la cuenta. El objetivo es que puedas aprender y experimentar sin gastar dinero.
+
+> **Importante:** El Free Tier tiene limites. Si los superas, AWS te cobra automaticamente a la tarjeta de credito que registraste. Siempre controla tu uso en la consola de Billing.
+
+### Que incluye el Free Tier (lo mas relevante para este proyecto)
+
+| Servicio | Que te da gratis | Duracion |
+|----------|-----------------|----------|
+| **EC2** (servidor virtual) | 750 horas/mes de instancia `t2.micro` o `t3.micro` (1 vCPU, 1 GB RAM) | 12 meses |
+| **RDS** (base de datos) | 750 horas/mes de instancia `db.t3.micro` con 20 GB de almacenamiento | 12 meses |
+| **S3** (almacenamiento) | 5 GB de almacenamiento, 20.000 requests GET, 2.000 PUT | 12 meses |
+| **Elastic IP** | 1 IP publica gratuita **mientras este asociada a una instancia corriendo** | 12 meses |
+| **Data Transfer** | 100 GB de salida a internet por mes | 12 meses |
+
+> 750 horas/mes = suficiente para tener **1 instancia corriendo 24/7** todo el mes (un mes tiene ~730 horas).
+
+### Que es EC2
+
+EC2 (Elastic Compute Cloud) es el servicio de servidores virtuales de AWS. Cada servidor se llama **instancia**. Una instancia es basicamente una computadora en la nube con Linux (o Windows) donde podes instalar lo que quieras.
+
+La instancia `t2.micro` del Free Tier tiene:
+- 1 vCPU
+- 1 GB de RAM
+- 8 GB de disco (ampliable hasta 30 GB gratis)
+- Conexion a internet
+
+Es suficiente para correr este proyecto en modo desarrollo o para un deploy basico.
+
+### Pasos para desplegar este proyecto en EC2
+
+#### 1. Crear una cuenta en AWS
+
+Ir a [aws.amazon.com](https://aws.amazon.com/) y crear una cuenta. Se necesita una tarjeta de credito/debito (se hace un cargo temporal de ~1 USD que se revierte).
+
+#### 2. Lanzar una instancia EC2
+
+1. Entrar a la [consola de EC2](https://console.aws.amazon.com/ec2/)
+2. Click en **Launch Instance**
+3. Configurar:
+   - **Nombre:** `prog3-final` (o el que quieras)
+   - **AMI:** Ubuntu Server 24.04 LTS (Free Tier eligible)
+   - **Instance type:** `t2.micro` (Free Tier eligible)
+   - **Key pair:** Crear un nuevo par de claves, descargar el archivo `.pem` (lo vas a necesitar para conectarte por SSH). **No lo pierdas.**
+   - **Network settings:** Habilitar trafico HTTP (puerto 80) y HTTPS (puerto 443). Tambien asegurarse de que SSH (puerto 22) este habilitado.
+   - **Storage:** 20 GB gp3 (dentro del Free Tier)
+4. Click en **Launch Instance**
+
+#### 3. Conectarse por SSH
+
+```bash
+# Dar permisos al archivo de clave
+chmod 400 tu-clave.pem
+
+# Conectarse (reemplazar con la IP publica de tu instancia)
+ssh -i tu-clave.pem ubuntu@54.XXX.XXX.XXX
+```
+
+> La IP publica la encontras en la consola de EC2, en los detalles de tu instancia.
+
+#### 4. Instalar Docker en la instancia
+
+```bash
+# Actualizar el sistema
+sudo apt update && sudo apt upgrade -y
+
+# Instalar Docker
+curl -fsSL https://get.docker.com | sudo sh
+
+# Agregar tu usuario al grupo docker (para no usar sudo)
+sudo usermod -aG docker $USER
+
+# Cerrar sesion y volver a entrar para que tome efecto
+exit
+# Volver a conectarse con ssh...
+
+# Verificar que Docker funciona
+docker --version
+docker compose version
+```
+
+#### 5. Clonar el proyecto y levantarlo
+
+```bash
+# Clonar el repositorio
+git clone https://github.com/tu-usuario/tu-repo.git
+cd tu-repo
+
+# Levantar los servicios
+docker compose up -d
+
+# Verificar que todo esta corriendo
+docker compose ps
+```
+
+En este punto, tu proyecto esta accesible en `http://IP-PUBLICA-DE-TU-INSTANCIA`.
+
+#### 6. (Opcional) Asociar un dominio
+
+Si tenes un dominio o un DDNS, podes apuntarlo a la IP publica de tu instancia EC2 y configurar Caddy con HTTPS como se explico en la seccion anterior.
+
+> **Nota sobre Elastic IP:** La IP publica de una instancia EC2 cambia cada vez que la detenes y la volves a iniciar. Para tener una IP fija, podes asignar una **Elastic IP** (gratuita mientras la instancia este corriendo). Se hace desde la consola de EC2 → Elastic IPs → Allocate → Associate.
+
+### Consideraciones sobre costos
+
+- **No dejes instancias corriendo si no las usas.** Si bien el Free Tier da 750 horas/mes, si lanzas 2 instancias, cada una consume horas por separado (2 instancias × 375 horas = 750 horas en medio mes).
+- **Elastic IP sin instancia = costo.** Si reservas una Elastic IP y no la asocias a una instancia corriendo, AWS te cobra ~$3.65/mes.
+- **Configura alertas de Billing.** En la consola de AWS → Billing → Budgets, podes crear una alerta que te avise si tu gasto supera cierto monto (por ejemplo, $1 USD).
+- **Cuando termines el cuatrimestre**, elimina la instancia y libera la Elastic IP para no tener cargos inesperados.
+
+### Alternativas gratuitas a AWS
+
+Si AWS te parece complejo o no queres poner una tarjeta de credito, hay alternativas con planes gratuitos mas simples:
+
+| Plataforma | Plan gratuito | Ideal para |
+|------------|--------------|------------|
+| [Railway](https://railway.app/) | $5 USD de credito/mes | Deploy rapido con Docker |
+| [Render](https://render.com/) | Servicios web gratuitos (se apagan por inactividad) | Proyectos simples |
+| [Fly.io](https://fly.io/) | 3 VMs compartidas gratuitas | Contenedores Docker |
+| [Oracle Cloud](https://www.oracle.com/cloud/free/) | 2 instancias ARM gratuitas **para siempre** (4 CPU, 24 GB RAM total) | Alternativa a EC2 sin limite de 12 meses |

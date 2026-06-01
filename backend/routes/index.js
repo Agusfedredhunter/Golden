@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const authRoutes = require('./auth');
 
 // Ruta de prueba
 router.get('/health', (req, res) => {
@@ -10,6 +11,9 @@ router.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development'
   });
 });
+
+// Rutas de autenticación
+router.use('/auth', authRoutes);
 
 // Ruta de ejemplo
 router.get('/test', (req, res) => {

@@ -19,7 +19,11 @@ const sequelize = new Sequelize(
   }
 );
 
+const UserModel = require('./User');
+const User = UserModel(sequelize);
+
 module.exports = {
   sequelize,
-  Sequelize
+  Sequelize,
+  User
 };
