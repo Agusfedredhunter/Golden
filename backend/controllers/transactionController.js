@@ -115,3 +115,4 @@ const actualizar = async (req, res) => {
     console.error('Error en actualizar:', error);
     res.status(500).json({ error: 'Error al actualizar transacción' });
   }
+};                        
