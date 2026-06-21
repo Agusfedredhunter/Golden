@@ -19,11 +19,21 @@ const sequelize = new Sequelize(
   }
 );
 
-const UserModel = require('./User');
+const UserModel = require('./user');
+const CategoryModel = require('./category');
+const TransactionModel = require('./transaction');
+
 const User = UserModel(sequelize);
+const Category = CategoryModel(sequelize);
+const Transaction = TransactionModel(sequelize);
+
+Category.hasMany(Transaction, { foreignKey: 'categoryId', as: 'transactions' });
+Transaction.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
 
 module.exports = {
   sequelize,
   Sequelize,
-  User
+  User,
+  Category,
+  Transaction
 };

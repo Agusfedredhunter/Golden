@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const authRoutes = require('./auth');
+const transactionRoutes = require('./transactions');
+const categoryRoutes = require('./categories');
 
 // Ruta de prueba
 router.get('/health', (req, res) => {
@@ -12,10 +14,11 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Rutas de autenticación
 router.use('/auth', authRoutes);
 
-// Ruta de ejemplo
+router.use('/transactions', transactionRoutes);
+router.use('/categories', categoryRoutes);
+
 router.get('/test', (req, res) => {
   res.json({
     message: 'Endpoint de prueba',
