@@ -1,7 +1,6 @@
 Contenidos de este archivo:
 - Diagrama entidad-relación
 - postman collector link con documentación de endpoints
-- explicación de carpetas, archivos, y funciones
 
 Diagrama entidad-relacion:
 ![alt text](image.png)
