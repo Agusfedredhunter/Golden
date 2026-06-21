@@ -27,3 +27,15 @@ const crear = async (req, res) => {
 
     const resultado = await Transaction.findByPk(transaction.id, {
       include: [{ model: Category, as: 'category' }]
+    });
+
+    res.status(201).json({ message: 'Transacción creada exitosamente', transaction: resultado });
+  } catch (error) {
+    console.error('Error en crear:', error);
+    res.status(500).json({ error: 'Error al crear transacción' });
+  }
+};
+
+const listar = async (req, res) => {
+  try {
+    const { tipo, categoryId, fechaDesde, fechaHasta } = req.query;
