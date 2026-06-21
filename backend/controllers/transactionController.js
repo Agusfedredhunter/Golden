@@ -26,7 +26,7 @@ const crear = async (req, res) => {
     const transaction = await Transaction.create({ monto, tipo, descripcion, fecha, categoryId });
 
     const resultado = await Transaction.findByPk(transaction.id, {
-      include: [{ model: Category, as: 'category' }]                                                 //subido por Iñaki
+      include: [{ model: Category, as: 'category' }]                                                 
     });
 
     res.status(201).json({ message: 'Transacción creada exitosamente', transaction: resultado });
@@ -38,10 +38,10 @@ const crear = async (req, res) => {
 
 const listar = async (req, res) => {
   try {
-    const { tipo, categoryId, fechaDesde, fechaHasta } = req.query; // hasta acá es mía (joaquin)
+    const { tipo, categoryId, fechaDesde, fechaHasta } = req.query; 
 
     const where = {};
-// hasta acá lo sube Moore Andy
+// 
     if (tipo) where.tipo = tipo;
     if (categoryId) where.categoryId = categoryId;
     if (fechaDesde || fechaHasta) {
@@ -50,8 +50,8 @@ const listar = async (req, res) => {
       if (fechaHasta) where.fecha[Op.lte] = fechaHasta;
     }
 
-    const transactions = await Transaction.findAll({                                // hasta acá subió Lima Jesus
-                                                                                     //de acá a la siguiente marca es para andy
+    const transactions = await Transaction.findAll({                                
+                                                                                     
       where,                                                                                      
       include: [{ model: Category, as: 'category' }],
       order: [['fecha', 'DESC']]
