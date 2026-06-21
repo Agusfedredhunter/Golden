@@ -38,10 +38,10 @@ const crear = async (req, res) => {
 
 const listar = async (req, res) => {
   try {
-    const { tipo, categoryId, fechaDesde, fechaHasta } = req.query; 
+    const { tipo, categoryId, fechaDesde, fechaHasta } = req.query;
 
     const where = {};
-// 
+
     if (tipo) where.tipo = tipo;
     if (categoryId) where.categoryId = categoryId;
     if (fechaDesde || fechaHasta) {
@@ -50,16 +50,15 @@ const listar = async (req, res) => {
       if (fechaHasta) where.fecha[Op.lte] = fechaHasta;
     }
 
-    const transactions = await Transaction.findAll({                                
-                                                                                     
-      where,                                                                                      
+    const transactions = await Transaction.findAll({
+      where,
       include: [{ model: Category, as: 'category' }],
       order: [['fecha', 'DESC']]
     });
 
     res.json({ transactions });
   } catch (error) {
-    console.error('Error en listar:', error);                          
+    console.error('Error en listar:', error);
     res.status(500).json({ error: 'Error al obtener transacciones' });
   }
 };
@@ -79,7 +78,7 @@ const balance = async (req, res) => {
 
     res.json({
       ingresos: ingresos.toFixed(2),
-      gastos: gastos.toFixed(2),                                     
+      gastos: gastos.toFixed(2),
       balance: (ingresos - gastos).toFixed(2)
     });
   } catch (error) {
@@ -92,6 +91,28 @@ const actualizar = async (req, res) => {
   try {
     const { id } = req.params;
     const { monto, tipo, descripcion, fecha, categoryId } = req.body;
-                                                                    
+
     const transaction = await Transaction.findByPk(id);
-    if (!transaction) {                             
+    if (!transaction) {
+      return res.status(404).json({ error: 'Transacción no encontrada' });
+    }
+
+    if (categoryId) {
+      const categoria = await Category.findByPk(categoryId);
+      if (!categoria) {
+        return res.status(404).json({ error: 'Categoría no encontrada' });
+      }
+    }
+
+    await transaction.update({ monto, tipo, descripcion, fecha, categoryId });
+
+    const resultado = await Transaction.findByPk(id, {
+      include: [{ model: Category, as: 'category' }]
+    });
+
+    res.json({ message: 'Transacción actualizada exitosamente', transaction: resultado });
+  } catch (error) {
+    console.error('Error en actualizar:', error);
+    res.status(500).json({ error: 'Error al actualizar transacción' });
+  }
+};                        
