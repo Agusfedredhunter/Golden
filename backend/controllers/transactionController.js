@@ -115,4 +115,23 @@ const actualizar = async (req, res) => {
     console.error('Error en actualizar:', error);
     res.status(500).json({ error: 'Error al actualizar transacción' });
   }
-};                        
+};
+
+const eliminar = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const transaction = await Transaction.findByPk(id);
+    if (!transaction) {
+      return res.status(404).json({ error: 'Transacción no encontrada' });
+    }
+
+    await transaction.destroy();
+    res.json({ message: 'Transacción eliminada exitosamente' });
+  } catch (error) {
+    console.error('Error en eliminar:', error);
+    res.status(500).json({ error: 'Error al eliminar transacción' });
+  }
+};
+
+module.exports = { validarTransaccion, crear, listar, balance, actualizar, eliminar };
